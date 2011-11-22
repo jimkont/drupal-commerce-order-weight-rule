@@ -1,0 +1,10 @@
+; $Id$
+name = Commerce Order Weight Rule
+description = Provides o rule for commerce order to check the total order weight (for shipping purposes)
+package = Commerce (contrib)
+dependencies[] = commerce
+dependencies[] = physical
+core = 7.x
+
+; Base module files
+files[] = commerce_order_weight_rule.module

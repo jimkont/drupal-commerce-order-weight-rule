@@ -1,0 +1,106 @@
+<?php
+
+
+/**
+ * Implements hook_rules_condition_info().
+ */
+function commerce_order_weight_rule_rules_condition_info() {
+  $conditions = array();
+
+  $conditions['commerce_order_weight_rule_calculate_order_weight'] = array(
+    'label' => t('Total order weight'),
+    'parameter' => array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Order'),
+        'description' => t('The order whose product line item quantities should be totalled. If the specified order does not exist, the comparison will act as if it is against a quantity of 0.'),
+      ),
+      'operator' => array(
+        'type' => 'text',
+        'label' => t('Operator'),
+        'description' => t('The comparison operator to use against the total weight of the order.'),
+        'default value' => '>=',
+        'options list' => 'commerce_numeric_comparison_operator_options_list',
+        'restriction' => 'input',
+      ),
+      'value' => array(
+        'type' => 'text',
+        'label' => t('Quantity'),
+        'default value' => 1,
+        'description' => t('The value to compare against the total weight of the order.'),
+      ),
+    ),
+    'group' => t('Commerce Order'),
+    'callbacks' => array(
+      'execute' => 'commerce_order_weight_rule_compare_total_weight',
+    ),
+  );
+
+  return $conditions;
+}
+
+
+function commerce_order_weight_rule_compare_total_weight($order, $operator, $value) {
+  
+  $weight = commerce_order_weight_rule_get_weight($order);
+
+  // Make a quantity comparison based on the operator.
+  switch ($operator) {
+    case '<':
+      return $weight < $value;
+    case '<=':
+      return $weight <= $value;
+    case '=':
+      return $weight == $value;
+    case '>=':
+      return $weight >= $value;
+    case '>':
+      return $weight > $value;
+  }
+
+  return FALSE;
+}
+
+
+
+/**
+ * Calculate total order weight
+ */
+function commerce_order_weight_rule_get_weight($order) {    
+ 
+  $total_weight = 100;
+  $line_item_ids = array();
+  $order_lang = field_language('commerce_order', $order, 'commerce_line_items');
+  
+  foreach ($order->commerce_line_items[$order_lang] as $line_item_id){
+    $line_item_ids[] = $line_item_id['line_item_id'];
+  }   
+  
+  $line_items = commerce_line_item_load_multiple($line_item_ids, array(), true);
+
+  foreach ($line_items as $line_item){
+
+    if ($line_item->type == 'product'){
+      $lang = field_language('commerce_line_item', $line_item, 'commerce_product');
+      
+      // determine product type rate and weight field
+      $product_id = $line_item->commerce_product[$lang][0]['product_id'];
+      $product = commerce_product_load($product_id);
+      $type = $product->type;
+      $weight_field = 'field_weight';
+      $quantity = $line_item->quantity;
+      $product_lang = field_language('commerce_product', $product, $weight_field);
+          
+      // assess weight-based cost
+      if (isset($product->{$weight_field}[$product_lang][0]['weight'])){
+        $weight = $product->{$weight_field}[$product_lang][0]['weight'];
+        $total_weight += $weight * $quantity;        
+ /*     */
+      }
+    }
+  }
+
+  return $total_weight;
+  
+}
+
