@@ -68,7 +68,7 @@ function commerce_order_weight_rule_compare_total_weight($order, $operator, $val
  */
 function commerce_order_weight_rule_get_weight($order) {    
  
-  $total_weight = 100;
+  $total_weight = 0;
   $line_item_ids = array();
   $order_lang = field_language('commerce_order', $order, 'commerce_line_items');
   
@@ -87,7 +87,7 @@ function commerce_order_weight_rule_get_weight($order) {
       $product_id = $line_item->commerce_product[$lang][0]['product_id'];
       $product = commerce_product_load($product_id);
       $type = $product->type;
-      $weight_field = 'field_weight';
+      $weight_field = 'field_weight'; //TODO ..
       $quantity = $line_item->quantity;
       $product_lang = field_language('commerce_product', $product, $weight_field);
           
